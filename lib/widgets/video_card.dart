@@ -1,10 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
-class VideoCard extends StatelessWidget {
+class VideoCard extends StatefulWidget {
   const VideoCard({super.key});
 
   @override
+  State<VideoCard> createState() => _VideoCardState();
+}
+
+class _VideoCardState extends State<VideoCard> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset('assets/videos/intro.mp4')
+      ..initialize().then((_) {
+        setState(() {
+          _isInitialized = true;
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isPlaying = _isInitialized && _controller.value.isPlaying;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -16,101 +43,134 @@ class VideoCard extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 16),
-        Container(
-          height: 220,
-          width: double.infinity,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            image: const DecorationImage(
-              image: NetworkImage(
-                'https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-              ),
-              fit: BoxFit.cover,
+        GestureDetector(
+          onTap: () {
+            if (_isInitialized) {
+              setState(() {
+                _controller.value.isPlaying ? _controller.pause() : _controller.play();
+              });
+            }
+          },
+          child: Container(
+            height: 220,
+            width: double.infinity,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(24),
             ),
-          ),
-          child: Stack(
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black54,       
-                      Colors.transparent,   
-                      Colors.black87,       
-                    ],
-                  ),
-                ),
-              ),
-              const Positioned(
-                top: 16,
-                left: 16,
-                child: Text(
-                  'PIC TECH SETUP TOUR',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.2),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5), 
-                      width: 1.5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_isInitialized)
+                  FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-              ),
-                Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.play_circle_outline,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Featured Work & Engineering Intro 2024 • 03:45',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  )
+                else
+                  const Center(child: CircularProgressIndicator(color: Colors.white)),
+
+                AnimatedOpacity(
+                  opacity: isPlaying ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black87,
+                          Colors.transparent,
+                          Colors.black87,
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.fullscreen,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: AnimatedOpacity(
+                    opacity: isPlaying ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: const Text(
+                      'PERKENALAN SINGKAT',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isInitialized)
+                  Align(
+                    alignment: Alignment.center,
+                    child: AnimatedOpacity(
+                      opacity: isPlaying ? 0.0 : 1.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.2),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: AnimatedOpacity(
+                    opacity: isPlaying ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Hanif Ahmad • Mahasiswa S1 Informatika',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isInitialized
+                              ? '${_controller.value.duration.inMinutes.toString().padLeft(2, '0')}:${(_controller.value.duration.inSeconds % 60).toString().padLeft(2, '0')}'
+                              : '--:--',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

@@ -43,7 +43,7 @@ class SkillsSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                '${skills.length} Stacks',
+                '${skills.length} Tech',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
